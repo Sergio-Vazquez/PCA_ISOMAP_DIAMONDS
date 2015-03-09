@@ -18,15 +18,19 @@
 # table: anchura de la parte superior de diamante con relación al punto más ancho (43-95)
 
 
-# 1- Obtenemos el dataset diamonds.
+# 0- Instalacion de librerias.
 
-
-library(RDRToolbox)
-library(rgl)
-library(dplyr)
 library(ggplot2)
+library(quantmod)
 
+### Para crear plots 3D hay que instalar el paquete rlg
+library(rgl) 
 
+### Packete RDRToolbox para Reducción de Dimensiones No-Lineal
+library(RDRToolbox)
+library(dplyr)
+
+# 1- Obtenemos el dataset diamonds.
 data(diamonds)
 
 # 2- Analizamos de forma rapida los datos presentes en el dataset.
@@ -144,26 +148,51 @@ pr.out$rotation
 
 ################################### ESTUDIO ISOMAP #######################################################
 
-### Packete RDRToolbox para Reducción de Dimensiones No-Lineal
-source("http://bioconductor.org/biocLite.R")
-biocLite("RDRToolbox")
-### Para crear plots 3D hay que instalar el paquete rlg
-install.packages("rgl")
+## Debido a que el dataset "df.estudio" presenta muchos registros, mi maquina virtual no puede procesar toda la información
+# por lo que decido realizar una muestra con 500 registros en vez de los 53.940 que tiene.
 
-library(RDRToolbox)
-library(rgl)
+# Se puede comprobar las dimensiones del data frame con el que no puedo ejecutar Isomap:
+dim(as.matrix(df.estudio)) # tiene 53940 filas y 10 columnas, que son las variables
 
-# Estimamos la dimensión dibujando los residuos
-IsomapIndicadores_1to10 = Isomap(df.estudio, dims=1:10, k=5, plotResiduals=TRUE)
+muestra.estudio <- df.estudio[1:500, ]
+
+# Estimamos la dimensión dibujando los residuos con 4 vecinos.
+IsomapIndicadores_1to10 = Isomap(data = as.matrix(muestra.estudio), dims=1:10, k=4, plotResiduals=TRUE)
+# Se puede observar una vez realizado este Isomap, como a partir de la dimension 2-3 la gráfica decae.
 
 
-#Con 2 dimensiones
-IsomapIndicadores_2 = Isomap(data = as.matrix(df.estudio), dim = 2, k = 4)
+#Calculamos Isomap con 2 dimensiones
+IsomapIndicadores_2 = Isomap(data = as.matrix(muestra.estudio), dim = 2, k = 4)
+# Plot con 2 dimensiones
+plotDR(data=IsomapIndicadores_2$dim2,axesLabels = c('CP1', 'CP2'))
+
+
+#Calculamos Isomap con 3 dimensiones
+IsomapIndicadores_3 = Isomap(data = as.matrix(muestra.estudio), dim = 3, k = 4)
 # Plot con 3 dimensiones
-plotDR(data=IsomapIndicadores_2$dim2)
+plotDR(data=IsomapIndicadores_3$dim3, axesLabels = c('CP1', 'CP2', 'CP3'))
+
+# Se puede ver como no perdemos mucha informacion al pasar de 3 a 2 dimensiones.
+# Nos quedamos con dimension intrínseca 2 para seguir el análisis.
+# Se puede observar una especie de parabola que crea los datos.
+# Los datos se agrupan mas cuando V2 < 5 y V1 < 10
+
+# Creamos unos datos filtrados con las 2 dimensiones intrinsecas anteriores en donde se agrupan los datos:
+Isomap_filtrado_v1 <- as.data.frame(row.names = rownames(muestra.estudio),IsomapIndicadores_2$dim2)
+
+# Indico los valores de V1 y V2 donde se concentran los datos:
+Isomap_filtrado_v2 <- rownames(Isomap_filtrado_v1[Isomap_filtrado_v1$V1 < 10 & filter_isomap$V2 < 5,])
+
+#Obtenemos un dataframe con esos datos filtrados:
+df.filtrado.isomap <- muestra.estudio[Isomap_filtrado_v2, ]
+
+# Ahora si comparamos los resultados obtenidos, con los obtenidos en el dataset original, veremos que son datos muy parecidos:
+
+summary(df.filtrado.isomap)
+summary(df.estudio)
+
+# Se puede deducir que el estudio de ISOMAP con 2 variables intrínsecas es correcto y no perdemos prácticamente informacion
+# respecto al dataset original.
 
 
-#Con 3 dimensiones
-IsomapIndicadores_3 = Isomap(data = as.matrix(df.estudio), dim = 3, k = 4)
-# Plot con 3 dimensiones
-plotDR(data=IsomapIndicadores_3$dim3)
+
