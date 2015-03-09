@@ -141,3 +141,29 @@ pr.out$rotation
 # es totalmente normal que dicho valor dependa del tipo de corte del diamante, ya que en funcion del tipo de corte, la forma
 # del diamante cambia totalmente.
 
+
+################################### ESTUDIO ISOMAP #######################################################
+
+### Packete RDRToolbox para Reducción de Dimensiones No-Lineal
+source("http://bioconductor.org/biocLite.R")
+biocLite("RDRToolbox")
+### Para crear plots 3D hay que instalar el paquete rlg
+install.packages("rgl")
+
+library(RDRToolbox)
+library(rgl)
+
+# Estimamos la dimensión dibujando los residuos
+IsomapIndicadores_1to10 = Isomap(df.estudio, dims=1:10, k=5, plotResiduals=TRUE)
+
+
+#Con 2 dimensiones
+IsomapIndicadores_2 = Isomap(data = as.matrix(df.estudio), dim = 2, k = 4)
+# Plot con 3 dimensiones
+plotDR(data=IsomapIndicadores_2$dim2)
+
+
+#Con 3 dimensiones
+IsomapIndicadores_3 = Isomap(data = as.matrix(df.estudio), dim = 3, k = 4)
+# Plot con 3 dimensiones
+plotDR(data=IsomapIndicadores_3$dim3)
